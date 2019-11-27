@@ -1,0 +1,118 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Grupo de Teoria da Computacao, Universidade de Brasilia
+%%% M. Ayala-Rincon, Flavio L.C. de Moura
+%%% Last modification:  April 28 2015
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+cbubblesort: THEORY
+ BEGIN
+
+  IMPORTING sorting, bubblesort, complexity
+
+  l, l1, l2: VAR list[nat]
+
+  i, j, k, n: VAR nat
+
+
+  %essa é a função bubbling com
+  %%um contador de comparações
+  cbubbling(l, (c:nat), (n: below[length(l)])): RECURSIVE [list[nat], nat] =
+    IF n = 0 THEN (l,c)
+    ELSIF car(l) > car(cdr(l))
+      THEN LET laux = cbubbling(cons(car(l), cdr(cdr(l))), c, n - 1) IN
+            (cons(car(cdr(l)), laux`1), laux`2 + 1)
+    ELSE LET laux2 = cbubbling(cdr(l), c, n - 1) IN
+           (cons(car(l), laux2`1), laux2`2 + 1)
+    ENDIF
+     MEASURE n
+
+
+ 
+   %se l tem pelo menos um elemento, então
+ %o comprimeiro da cauda de l é o comprimento de l menos 1.
+ length_cdr: LEMMA
+  FORALL (l):
+   length(l) >= 1 IMPLIES length(cdr(l)) = length(l) - 1
+
+ %se l tem pelo menos dois elementos, então o comprimento
+ %da cauda de l é maior que um.
+ length_cdr_l: LEMMA
+ FORALL (l): length(l) >= 2 IMPLIES length(cdr(l)) >= 1
+
+
+ %aplicar bubbling em uma lista não muda o comprimento
+ %da lista
+ cbubbling_preserve_length: LEMMA
+ FORALL (n: nat):
+  FORALL (l, (c:nat)):
+   n < length(l) IMPLIES length(cbubbling(l, c, n)`1) = length(l)
+
+ %corolário
+ corolario_cbb_preserves_length: LEMMA
+  FORALL (l, (c, i: nat)):
+   i + 1 < length(l) IMPLIES i < length(cbubbling(l, c, i + 1)`1)
+
+ %bubbling(l, c, n) executa n comparações
+ comp_cbubbling: LEMMA
+ FORALL (n: nat):
+  FORALL (l, (c:nat)):
+  n < length(l) IMPLIES  cbubbling(l, c, n)`2 = c + n
+
+
+  %essa é a função bubblesort_aux com
+  %um contador de comparações
+  cbubblesort_aux(l, (c: nat), (n: below[length(l)])): RECURSIVE  [list[nat], nat] =
+    IF n = 0 THEN (l,c)
+    ELSE LET laux3 = cbubbling(l, c, n) IN
+    cbubblesort_aux(laux3`1, laux3`2, n - 1)
+    ENDIF
+     MEASURE n
+
+
+  %essa é a função bubblesort com
+  %um contador de comparações
+  cbubblesort(l): [list[nat], nat] =
+      IF null?(l) THEN (l, 0)
+      ELSE cbubblesort_aux(l, 0, length(l) - 1)
+      ENDIF
+
+
+
+ %determina o numero de comparações realizadas por cbubblesort_aux
+ %em função do parametro i
+ cbubbleaux_bound: LEMMA
+ FORALL (i: nat):
+  FORALL (l, (c: nat)):
+   i < length(l) IMPLIES cbubblesort_aux(l, c, i)`2 = (i * i + i) / 2 + c
+
+ %determina o numero de comparações realizadas por cbubblesort
+ %em função do comprimento da lista
+  comparisons_bubblesort: LEMMA
+  FORALL l: cbubblesort(l)`2 = (length(l)^2 - length(l)) / 2
+
+  %bubblesort é assintóticamente quadrático
+   bubblesort_is_quadratic2: LEMMA
+    member(LAMBDA(n: nat): 1/2 *(n^2 - n), Theta( LAMBDA(n: nat): n^2))
+
+   %aqui temos lemas que garantem a equivalencia das funções
+   %com e sem os contadores.
+
+  %as listas geradas por bubbling e cbubbling sao iguais
+  equiv_bubbling: LEMMA
+  FORALL (n: nat):
+   FORALL(l, (c: nat)):
+   n < length(l) IMPLIES cbubbling(l, c, n)`1 = bubbling(l, n)
+
+  %as listas geradas por bubblesort_aux e cbubblesort_aux sao iguais
+  equiv_bubblesort_aux: LEMMA
+  FORALL (n: nat):
+   FORALL(l, (c:nat)):
+    n < length(l) IMPLIES cbubblesort_aux(l, c, n)`1 = bubblesort_aux(l, n)
+
+  %as listas geradas por bubblesort e cbubblesort sao iguais
+  equiv_bubblesort: LEMMA
+   FORALL l:
+    cbubblesort(l)`1 = bubblesort(l)
+
+ END cbubblesort
